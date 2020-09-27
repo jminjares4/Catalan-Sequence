@@ -10,6 +10,11 @@
         load among the threads.You mustuse the “long double” type to get the largest range
         possible; the Catalan numbers grow very quickly.Output must be in ascending order
         (fixed point format) in the file “catalan.dat”
+        
+        -------Catalan Formula-----
+        C_n+1 = 2*(2*n + 1)/(n+2) * Cn
+        C_n+1 = (4n + 2)/(n+2) *Cn
+        ---------------------------
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,12 +73,11 @@ void * printCatalanNumbers(void *param){
     fprintf(file,"------------------\n");
     pthread_exit(NULL); //exit thread and return nothing 
 }
-// C_n+1 = 2*(2*n + 1)/(n+2) * Cn
-// C_n+1 = (4n + 2)/(n+2) *Cn
 /*
 base case: n < 1, set 1
 else: call recursive C(n-1)
+NOTE: there will be a precision lost because of the division
 */
-long double catalanNumber(int n){
+long double catalanNumber(int n){ 
      return n < 1 ? 1 : catalanNumber(n - 1) * (4*n + 2)  / (n + 2);
 }
