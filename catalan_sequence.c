@@ -17,7 +17,7 @@
 #define MAX_THREADS 4 //max threads 
 #define MIN_THREADS 1 //minimum thread 
 void * printCatalanNumbers(void *param); //subroutine for print 
-unsigned long long catalanNumber(int n); //get the nth catalan number 
+long double catalanNumber(int n); //get the nth catalan number 
 pthread_t thread[MAX_THREADS]; //pthread_t array of 4
 typedef struct boundary{
     int high;
@@ -57,14 +57,14 @@ int main(int argc, char *argv[]){
         //create the thread, default attr, printCatalan function, and pass the structure 
         pthread_create(&thread[i],&attr, printCatalanNumbers,(void*)&bound[i]);
         pthread_join(thread[i], NULL); //wait to the thread has ended 
-    }
+    } 
     return EXIT_SUCCESS;
 }
 void * printCatalanNumbers(void *param){
     Boundary *bound = param;//implicity type cast the param to a struct *
     //iterate from the low and high of the sequence
     for(int i = bound->low; i < bound->high; i++)
-        fprintf(file,"%d: %llu\n",i+1,catalanNumber(i)); //print to the file 
+        fprintf(file,"%d: %Lf\n",i+1,catalanNumber(i)); //print to the file 
     fprintf(file,"------------------\n");
     pthread_exit(NULL); //exit thread and return nothing 
 }
@@ -74,6 +74,6 @@ void * printCatalanNumbers(void *param){
 base case: n < 1, set 1
 else: call recursive C(n-1)
 */
-unsigned long long catalanNumber(int n){
+long double catalanNumber(int n){
      return n < 1 ? 1 : catalanNumber(n - 1) * (4*n + 2)  / (n + 2);
 }
