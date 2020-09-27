@@ -76,7 +76,7 @@ void * printCatalanNumbers(void *param){
 /*
 base case: n < 1, set 1
 else: call recursive C(n-1)
-NOTE: there will be a precision lost because of the division
+NOTE: there will be a precision loss due to division
 */
 long double catalanNumber(int n){ 
      return n < 1 ? 1 : catalanNumber(n - 1) * (4*n + 2)  / (n + 2);
