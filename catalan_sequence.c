@@ -63,6 +63,8 @@ int main(int argc, char *argv[]){
         pthread_create(&thread[i],&attr, printCatalanNumbers,(void*)&bound[i]);
         pthread_join(thread[i], NULL); //wait to the thread has ended 
     } 
+    fclose(file);
+    printf("Catalan sequence stored in catalan.dat\n");
     return EXIT_SUCCESS;
 }
 void * printCatalanNumbers(void *param){
