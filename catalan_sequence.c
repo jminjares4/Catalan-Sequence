@@ -24,6 +24,7 @@ typedef struct boundary{
     int low;
 }Boundary; //data structure to hold the bound 
 FILE *file; //file object
+pthread_attr_t attr;
 int main(int argc, char *argv[]){
     if(argc < 3){ 
         printf("./executable nth threads\n");
@@ -32,6 +33,10 @@ int main(int argc, char *argv[]){
     int n = atoi(argv[1]); //convert array to integer 
     int numThreads = atoi(argv[2]); //convert array to integer 
     file  = fopen("catalan.dat", "w"); //create a file, open a file as "write"
+    if(file == NULL){
+       fprintf(stderr, "Error opening the file\n");
+       return EXIT_FAILURE;             
+    }
     int load = (int)n/numThreads; //get the increments
     //set the thread at minimum of 1
     if(atoi(argv[2]) < MIN_THREADS) numThreads = MIN_THREADS; 
@@ -47,9 +52,10 @@ int main(int argc, char *argv[]){
     //set the last thread.high at the nth number 
     bound[numThreads - 1].high = n;
     //create the threads, and join them
+    pthread_attr_init(&attr);
     for(int i = 0; i  < numThreads; i++){
         //create the thread, default attr, printCatalan function, and pass the structure 
-        pthread_create(&thread[i],NULL, printCatalanNumbers,(void*)&bound[i]); 
+        pthread_create(&thread[i],&attr, printCatalanNumbers,(void*)&bound[i]);
         pthread_join(thread[i], NULL); //wait to the thread has ended 
     }
     return EXIT_SUCCESS;
@@ -58,9 +64,9 @@ void * printCatalanNumbers(void *param){
     Boundary *bound = param;//implicity type cast the param to a struct *
     //iterate from the low and high of the sequence
     for(int i = bound->low; i < bound->high; i++)
-        fprintf(file,"%d: %llu\n",i,catalanNumber(i)); //print to the file 
+        fprintf(file,"%d: %llu\n",i+1,catalanNumber(i)); //print to the file 
     fprintf(file,"------------------\n");
-    pthread_exit(NULL); //
+    pthread_exit(NULL); //exit thread and return nothing 
 }
 // C_n+1 = 2*(2*n + 1)/(n+2) * Cn
 // C_n+1 = (4n + 2)/(n+2) *Cn
