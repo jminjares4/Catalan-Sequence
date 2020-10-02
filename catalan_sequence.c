@@ -1,19 +1,21 @@
 /*
     Author: Jesus Minjares BSEE 
     Problem:
-        Write a multi-threaded program that computes the Catalan number sequence
-        (http://mathworld.wolfram.com/CatalanNumber.html) and writes thosenumbers in fixed
-        point format to a file called “catalan.dat”. Your program should take two command
-        line arguments: the first specifies the number of Catalan numbers to generate and 
-        the second specifies the number of threads to use to compute the Catalan number 
-        sequence; you can assume a maximum of fourthreads.Create a way to balance the
-        load among the threads.You mustuse the “long double” type to get the largest range
-        possible; the Catalan numbers grow very quickly.Output must be in ascending order
-        (fixed point format) in the file “catalan.dat”
-        
+        Write a multi-threaded program that computes the Catalan number
+        sequence (http://mathworld.wolfram.com/CatalanNumber.html) and 
+        writes thosenumbers in fixed point format to a file called “catalan.dat”.
+        Your program should take two command line arguments: the first specifies 
+        the number of Catalan numbers to generate and the second specifies the
+        number of threads to use to compute the Catalan number sequence; you can
+        assume a maximum of four threads.Create a way to balance the load among
+        the threads.You must use the “long double” type to get the largest range
+        possible; the Catalan numbers grow very quickly. Output must be in ascending
+        order (fixed point format) in the file “catalan.dat”
         -------Catalan Formula-----
         C_n+1 = 2*(2*n + 1)/(n+2) * Cn
         C_n+1 = (4n + 2)/(n+2) *Cn
+        -------Catalan Formula with Factorial----
+        Cn = (2*n)!/(n+1)!n!
         ---------------------------
 */
 #include <stdio.h>
@@ -22,14 +24,16 @@
 #define MAX_THREADS 4 //max threads 
 #define MIN_THREADS 1 //minimum thread 
 void * printCatalanNumbers(void *param); //subroutine for print 
+long double catalanNumberWithFactorial(long double n);
+long double factorial(long double num);
 long double catalanNumber(int n); //get the nth catalan number 
 pthread_t thread[MAX_THREADS]; //pthread_t array of 4
+pthread_attr_t attr; //pthread default attribute
 typedef struct boundary{
     int high;
     int low;
 }Boundary; //data structure to hold the bound 
 FILE *file; //file object
-pthread_attr_t attr;
 int main(int argc, char *argv[]){
     if(argc < 3){ 
         printf("./executable nth threads\n");
@@ -61,14 +65,14 @@ int main(int argc, char *argv[]){
     for(int i = 0; i  < numThreads; i++){
         //create the thread, default attr, printCatalan function, and pass the structure 
         pthread_create(&thread[i],&attr, printCatalanNumbers,(void*)&bound[i]);
-        pthread_join(thread[i], NULL); //wait to the thread has ended 
+        pthread_join(thread[i], NULL); //wait till the thread has ended
     } 
     fclose(file);
     printf("Catalan sequence stored in catalan.dat\n");
     return EXIT_SUCCESS;
 }
 void * printCatalanNumbers(void *param){
-    Boundary *bound = param;//implicity type cast the param to a struct *
+    Boundary *bound = param;//implicit type cast the param to a struct *
     //iterate from the low and high of the sequence
     for(int i = bound->low; i < bound->high; i++)
         fprintf(file,"%d: %Lf\n",i+1,catalanNumber(i)); //print to the file 
@@ -78,8 +82,16 @@ void * printCatalanNumbers(void *param){
 /*
 base case: n < 1, set 1
 else: call recursive C(n-1)
-NOTE: there will be a precision loss due to division
+NOTE: there will be a precision lost because of the division
 */
 long double catalanNumber(int n){ 
      return n < 1 ? 1 : catalanNumber(n - 1) * (4*n + 2)  / (n + 2);
+}
+/*Cn = (2*n)!/(n+1)!n!*/
+long double catalanNumberWithFactorial(long double n){
+    return factorial(2*n)/(factorial(n+1) * factorial(n));
+}
+long double factorial(long double num){
+    if(num == 0.0)  return 1.0;
+    else  return num*factorial(num - 1);
 }
