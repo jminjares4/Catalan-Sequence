@@ -24,16 +24,12 @@
 #define MAX_THREADS 4 //max threads 
 #define MIN_THREADS 1 //minimum thread 
 void * printCatalanNumbers(void *param); //subroutine for print 
-long double catalanNumberWithFactorial(long double n);
-long double factorial(long double num);
-long double catalanNumber(int n); //get the nth catalan number 
-pthread_t thread[MAX_THREADS]; //pthread_t array of 4
-pthread_attr_t attr; //pthread default attribute
-typedef struct boundary{
+long double catalanNumber(int n); //catalan number function 
+typedef struct Boundary{
     int high;
     int low;
-}Boundary; //data structure to hold the bound 
-FILE *file; //file object
+    int threadNum;
+}Boundary; //data structure that hold the bounds and thread numer
 int main(int argc, char *argv[]){
     if(argc < 3){ 
         printf("./executable nth threads\n");
@@ -41,42 +37,66 @@ int main(int argc, char *argv[]){
     }
     int n = atoi(argv[1]); //convert array to integer 
     int numThreads = atoi(argv[2]); //convert array to integer 
-    file  = fopen("catalan.dat", "w"); //create a file, open a file as "write"
+    FILE *file = fopen("catalan.dat", "w"); //create a file, open a file as "write"
     if(file == NULL){
        fprintf(stderr, "Error opening the file\n");
        return EXIT_FAILURE;             
     }
-    int load = (int)n/numThreads; //get the increments
     //set the thread at minimum of 1
-    if(atoi(argv[2]) < MIN_THREADS) numThreads = MIN_THREADS; 
+    if(numThreads< MIN_THREADS) numThreads = MIN_THREADS; 
     //set the threads at max of 4
-    if(atoi(argv[2]) > MAX_THREADS) numThreads = MAX_THREADS;
-    //create an array of limits 
+    if(numThreads > MAX_THREADS) numThreads = MAX_THREADS;
+    
+    int load = (int)n/numThreads; //get the increments
+    //create an array of threads bounds 
     Boundary bound[numThreads];
     //distribute the load among the threads 
     for(int i = 0; i < numThreads; i++){
+        bound[i].threadNum = i;
         bound[i].low = i * load;
         bound[i].high = (i + 1) * load;
     }
     //set the last thread.high at the nth number 
     bound[numThreads - 1].high = n;
-    //create the threads, and join them
-    pthread_attr_init(&attr);
-    for(int i = 0; i  < numThreads; i++){
-        //create the thread, default attr, printCatalan function, and pass the structure 
+     //create the threads, default attr, printCatalan function, and pass the structure 
+    pthread_t thread[MAX_THREADS]; //pthread_t array of 4
+    pthread_attr_t attr; //pthread default attribute
+    pthread_attr_init(&attr); //intialize the attribute to default 
+    //create the threads 
+    for(int i = 0; i  < numThreads; i++)
         pthread_create(&thread[i],&attr, printCatalanNumbers,(void*)&bound[i]);
-        pthread_join(thread[i], NULL); //wait till the thread has ended
-    } 
-    fclose(file);
+    //wait for all threads to finish
+    for(int i =0; i < numThreads; i++)
+        pthread_join(thread[i], NULL);
+    //combine all files into 1
+    for(int i =0; i < numThreads; i++){
+        char buffer[14];
+        sprintf(buffer,"file%i.dat",i); //write to buffer file name
+        FILE *threadFile = fopen(buffer,"r"); //open file name as read file 
+        if(threadFile == NULL){
+            fprintf(stderr, "Error opening the file\n");
+            return EXIT_FAILURE; 
+        }
+        char c = fgetc(threadFile);  //get the character of the file 
+        while (c != EOF) {  //iterate until End Of File 
+            fputc(c, file); //write to file 
+            c = fgetc(threadFile);  //get new character
+        } 
+        fclose(threadFile); //close the file 
+    }
+    fclose(file); //close the main file 
     printf("Catalan sequence stored in catalan.dat\n");
     return EXIT_SUCCESS;
 }
 void * printCatalanNumbers(void *param){
     Boundary *bound = param;//implicit type cast the param to a struct *
     //iterate from the low and high of the sequence
+    char buffer[14]; //buffer to set the thread filename
+    sprintf(buffer,"file%i.dat",bound->threadNum);//set thread file name
+    FILE *threadFile = fopen(buffer,"w"); //create a write file for the thread 
     for(int i = bound->low; i < bound->high; i++)
-        fprintf(file,"%d: %Lf\n",i+1,catalanNumber(i)); //print to the file 
-    fprintf(file,"------------------\n");
+        fprintf(threadFile,"%d: %Lf\n",i + 1,catalanNumber(i)); //print to the file 
+    fclose(threadFile); //close the thread file 
     pthread_exit(NULL); //exit thread and return nothing 
 }
 /*
@@ -86,12 +106,4 @@ NOTE: there will be a precision lost because of the division
 */
 long double catalanNumber(int n){ 
      return n < 1 ? 1 : catalanNumber(n - 1) * (4*n + 2)  / (n + 2);
-}
-/*Cn = (2*n)!/(n+1)!n!*/
-long double catalanNumberWithFactorial(long double n){
-    return factorial(2*n)/(factorial(n+1) * factorial(n));
-}
-long double factorial(long double num){
-    if(num == 0.0)  return 1.0;
-    else  return num*factorial(num - 1);
 }
